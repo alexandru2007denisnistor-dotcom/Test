@@ -1,15 +1,31 @@
 # GlassGym 🏋️
 
-Trainingsplan-, Ernährungs- und Gym-Kalender-App im **Liquid-Glass-Design**: ein in Echtzeit gerenderter, animierter Hintergrund, Glaseffekte mit Lichtreflexen, Federanimationen und Konfetti.
+Trainingsplan-, Ernährungs- und Gym-Kalender-App mit **Liquid Glass** wie bei Apple: Die Menüs (Tab-Leiste, Sheets, Kopfzeile, Hinweise) sind echtes, in Echtzeit gerendertes Glas mit Lichtbrechung an den Kanten. Die Inhalte liegen auf einem soliden, frei wählbaren Hintergrund. Dazu Federanimationen und Konfetti.
 
 ## Funktionen
 
-- **Trainingsplan**: Für jeden Wochentag Name, Muskelgruppen und Übungen mit Sätzen, Wiederholungen und kg festlegen. Fertige Vorlagen: Push/Pull/Legs, Upper/Lower, Ganzkörper.
+- **Trainingsplan**: Für jeden Wochentag Name, Muskelgruppen und Übungen mit Sätzen, Wiederholungen, kg und einer Notiz (z. B. „PR“) festlegen. Vorlagen: **📝 Mein Plan** (eigener Split Mo/Mi/Fr/Sa/So), Push/Pull/Legs, Upper/Lower, Ganzkörper.
 - **Übungsvorschläge**: Über 70 Übungen in 11 Muskelgruppen, mit Equipment, Schwierigkeit und Technik-Tipp. Im Tages-Editor kommen passende Vorschläge zu den gewählten Muskelgruppen (🔀 Andere, ✨ Auto).
 - **Ernährung**: Mahlzeiten, Getränke und Supplements tracken: kcal, Protein, Kohlenhydrate, Fett, Flüssigkeit und Koffein. Ein Pre-Workout-Eintrag zeigt Uhrzeit und Koffein in mg. Vorlagen für Kreatin, Whey, Kaffee, Energy Drinks usw. Warnung bei zu viel Koffein.
 - **Kalender**: Gym-Besuche eintragen, mit Notiz. Statistik für die Woche, den Monat und den Wochen-Streak.
 - **Erinnerungen**: Eine tägliche Benachrichtigung zur eingestellten Uhrzeit mit dem Training für heute, morgen und übermorgen. Dazu gibt es einen **.ics-Export** in die Kalender-App (wöchentliche Termine mit Erinnerung 1 Tag und 2 Stunden vorher).
 - Offline-fähig (PWA). Alle Daten bleiben lokal auf dem Gerät. Backup und Import als JSON.
+
+## Darstellung
+
+In den Einstellungen unter **🎨 Darstellung**:
+- **Hintergrund**: Schwarz (Standard, ideal für OLED), Graphit, Nacht, Aubergine, Tanne, Espresso, Bordeaux oder eine eigene Farbe. Eigene Farben werden automatisch so weit abgedunkelt, dass Text lesbar bleibt.
+- **Akzentfarbe**: Violett, Ozean, Minze, Sunset, Rosé, Lime, Silber.
+- **Liquid Glass**: Lichtbrechung an. Sie wird als SVG-Displacement-Map im `backdrop-filter` auf der GPU gerendert, mit leichter chromatischer Aberration. Das Glanzlicht folgt der Neigung des Handys. Die Lichtbrechung funktioniert in Chromium, also Android, Chrome und Edge. Safari zeigt stattdessen klassisches Milchglas.
+- **Animierter Hintergrund**: optional, standardmäßig aus.
+
+## Performance
+
+- Glas gibt es nur auf wenigen Menü-Elementen. Inhaltskarten sind solide Flächen ohne `backdrop-filter`.
+- Animationen nutzen nur `transform` und `opacity`, ohne Blur-Filter. Fortschrittsbalken arbeiten per `scaleX`.
+- Versteckte Glas-Elemente (Sheet, Toast, Kopfzeile) sind `visibility: hidden` und werden daher nicht gerendert.
+- Hintergrund-Canvas und Konfetti-Canvas laufen nur, wenn sie gebraucht werden. Konfetti ist zeitbasiert und läuft bei 60 und bei 120 Hz gleich schnell.
+- Android: Die App fordert die höchste Bildwiederholrate des Displays an (z. B. 120 Hz). Gebaut wird ein optimierter Release-Build.
 
 ## Starten
 
@@ -35,10 +51,10 @@ APK selbst bauen (benötigt Node 22+, JDK 21 und das Android SDK mit Plattform 3
 ```bash
 npm install
 npm run android:apk
-# → android/app/build/outputs/apk/debug/app-debug.apk
+# → android/app/build/outputs/apk/release/app-release.apk
 ```
 
-Die APK wird mit `android/app/glassgym-debug.keystore` signiert (Passwort `android`). Weil der Schlüssel im Repo liegt, lassen sich neue Versionen über die alte installieren, ohne die Daten zu verlieren. Für eine Veröffentlichung im Play Store braucht es einen eigenen, geheimen Release-Schlüssel.
+Die APK (Debug und Release) wird mit `android/app/glassgym-debug.keystore` signiert (Passwort `android`). Weil der Schlüssel im Repo liegt, lassen sich neue Versionen über die alte installieren, ohne die Daten zu verlieren. Für eine Veröffentlichung im Play Store braucht es einen eigenen, geheimen Release-Schlüssel.
 
 ## Hinweis zu Push-Nachrichten
 

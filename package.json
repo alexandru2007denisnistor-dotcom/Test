@@ -1,12 +1,12 @@
 {
   "name": "glassgym",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "GlassGym – Trainingsplan, Ernährung & Gym-Kalender",
   "scripts": {
     "build:www": "node scripts/build-www.mjs",
     "android:sync": "npm run build:www && npx cap sync android",
-    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",

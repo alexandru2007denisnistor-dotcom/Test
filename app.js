@@ -33,19 +33,23 @@ const findEx = (name) => {
 
 /* ---------- State ---------- */
 const STORE = 'glassgym.v1';
+const defaultTheme = () => ({ bg: '#000000', accent: 'violet', refraction: true, animatedBg: false });
 const defaults = () => ({
   plan: [null, null, null, null, null, null, null],
   visits: {},
   nutrition: {},
   goals: { kcal: 2600, protein: 160, carbs: 300, fat: 80, water: 3000, caffeine: 400 },
-  settings: { name: '', notify: false, notifyTime: '08:00', trainTime: '18:00', lastNotified: '' },
+  settings: { name: '', notify: false, notifyTime: '08:00', trainTime: '18:00', lastNotified: '', seeded: false, theme: defaultTheme() },
 });
-let state;
-try {
-  const raw = JSON.parse(localStorage.getItem(STORE) || 'null');
+function hydrate(raw) {
   const d = defaults();
-  state = raw ? { ...d, ...raw, goals: { ...d.goals, ...raw.goals }, settings: { ...d.settings, ...raw.settings } } : d;
-} catch (_) { state = defaults(); }
+  if (!raw) return d;
+  const settings = { ...d.settings, ...raw.settings };
+  settings.theme = { ...defaultTheme(), ...(raw.settings && raw.settings.theme) };
+  return { ...d, ...raw, goals: { ...d.goals, ...raw.goals }, settings };
+}
+let state;
+try { state = hydrate(JSON.parse(localStorage.getItem(STORE) || 'null')); } catch (_) { state = defaults(); }
 
 const ui = { tab: 'home', nutDate: dkey(new Date()), calMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1), exGroup: 'brust', exQuery: '' };
 
@@ -55,12 +59,12 @@ function save() {
 }
 
 /* ==========================================================
-   Echtzeit Liquid-Hintergrund (Canvas, 60 fps)
+   Optionaler animierter Hintergrund (nur wenn eingeschaltet)
    ========================================================== */
 const Bg = (() => {
   const cv = $('#bg');
   const ctx = cv.getContext('2d');
-  const SCALE = 0.18; // klein rendern → weich hochskaliert = flüssiger Blur gratis
+  const SCALE = 0.18; // klein rendern → weich hochskaliert = Blur gratis
   const palettes = {
     home:      [[139, 123, 255], [255, 95, 162], [77, 225, 255], [255, 181, 71]],
     plan:      [[124, 108, 255], [77, 160, 255], [255, 95, 162], [62, 230, 168]],
@@ -68,56 +72,48 @@ const Bg = (() => {
     nutrition: [[62, 230, 168], [34, 184, 255], [195, 247, 90], [139, 123, 255]],
     calendar:  [[77, 225, 255], [139, 123, 255], [255, 95, 162], [62, 230, 168]],
   };
-  const blobs = Array.from({ length: 6 }, (_, i) => ({
-    x: Math.random(), y: Math.random(), r: 0.35 + Math.random() * 0.25,
+  const blobs = Array.from({ length: 5 }, (_, i) => ({
+    r: 0.35 + Math.random() * 0.25,
     sx: 0.00007 + Math.random() * 0.00012, sy: 0.00006 + Math.random() * 0.0001,
     ph: Math.random() * 10, col: [...palettes.home[i % 4]], target: palettes.home[i % 4],
   }));
-  const pointer = { x: 0.5, y: 0.3, tx: 0.5, ty: 0.3 };
-  let w, h, tilt = { x: 0, y: 0 };
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let w = 0, h = 0, running = false, raf = 0, kick = 0, base = '#000000';
 
   function resize() {
     w = cv.width = Math.max(40, Math.round(innerWidth * SCALE));
     h = cv.height = Math.max(40, Math.round(innerHeight * SCALE));
   }
-  addEventListener('resize', resize);
-  resize();
-  addEventListener('pointermove', (e) => { pointer.tx = e.clientX / innerWidth; pointer.ty = e.clientY / innerHeight; }, { passive: true });
-  addEventListener('deviceorientation', (e) => {
-    if (e.gamma == null) return;
-    tilt.x = Math.max(-1, Math.min(1, e.gamma / 45));
-    tilt.y = Math.max(-1, Math.min(1, (e.beta - 45) / 45));
-  });
+  addEventListener('resize', () => { if (running) resize(); });
 
-  let kick = 0;
   function frame(t) {
-    pointer.x += (pointer.tx - pointer.x) * 0.04;
-    pointer.y += (pointer.ty - pointer.y) * 0.04;
     kick *= 0.95;
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#0b0820';
+    ctx.fillStyle = base;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = 'lighter';
     blobs.forEach((b, i) => {
       for (let c = 0; c < 3; c++) b.col[c] += (b.target[c] - b.col[c]) * 0.03;
-      let x = 0.5 + Math.sin(t * b.sx + b.ph) * 0.42 + tilt.x * 0.08;
-      let y = 0.5 + Math.cos(t * b.sy + b.ph * 1.3) * 0.42 + tilt.y * 0.08;
-      if (i === 0) { x = x * 0.45 + pointer.x * 0.55; y = y * 0.45 + pointer.y * 0.55; }
+      const x = 0.5 + Math.sin(t * b.sx + b.ph) * 0.42;
+      const y = 0.5 + Math.cos(t * b.sy + b.ph * 1.3) * 0.42;
       const r = (b.r + Math.sin(t * 0.0006 + i) * 0.05 + kick * 0.15) * Math.max(w, h);
       const [cr, cg, cb] = b.col.map(Math.round);
       const g = ctx.createRadialGradient(x * w, y * h, 0, x * w, y * h, r);
-      g.addColorStop(0, `rgba(${cr},${cg},${cb},0.45)`);
-      g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.18)`);
+      g.addColorStop(0, `rgba(${cr},${cg},${cb},0.42)`);
+      g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.16)`);
       g.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
     });
-    if (!reduce) requestAnimationFrame(frame);
+    if (running) raf = requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
 
   return {
+    setEnabled(on, color) {
+      base = color || base;
+      if (on && !running) { running = true; resize(); raf = requestAnimationFrame(frame); if (reduce) running = false; }
+      else if (!on && running) { running = false; cancelAnimationFrame(raf); }
+    },
     setTheme(name) {
       const p = palettes[name] || palettes.home;
       blobs.forEach((b, i) => { b.target = p[(i + 1) % 4]; });
@@ -126,43 +122,225 @@ const Bg = (() => {
   };
 })();
 
-/* ---------- Spiegelungen auf Glas folgen dem Finger ---------- */
-document.addEventListener('pointermove', (e) => {
-  const el = e.target.closest && e.target.closest('.glass');
-  if (!el) return;
-  const r = el.getBoundingClientRect();
-  el.style.setProperty('--mx', `${e.clientX - r.left}px`);
-  el.style.setProperty('--my', `${e.clientY - r.top}px`);
-}, { passive: true });
+/* ==========================================================
+   Liquid Glass – in Echtzeit gerendertes Glas mit Lichtbrechung
+   Für jedes Glas-Element wird eine Displacement-Map berechnet:
+   Am Rand (Bezel) wird der Hintergrund wie durch eine gewölbte
+   Glaskante gebrochen, inkl. leichter chromatischer Aberration.
+   Läuft als SVG-backdrop-filter auf der GPU (Chromium / Android).
+   ========================================================== */
+const LiquidGlass = (() => {
+  const ua = navigator.userAgent;
+  const supported = /Chrome\/\d+/.test(ua) && !/Firefox\//.test(ua);
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+  const defs = document.createElementNS(NS, 'defs');
+  svg.appendChild(defs);
+  document.body.appendChild(svg);
+
+  const items = [];
+  const mapCache = new Map();
+  let enabled = false, seq = 0;
+
+  // Displacement-Map: R/G = Verschiebung in x/y (128 = keine). Nur im Bezel am Rand.
+  function displacementMap(w, h, r, bezel, openBottom) {
+    const key = `${w}|${h}|${r}|${bezel}|${openBottom}`;
+    if (mapCache.has(key)) return mapCache.get(key);
+    // große Flächen in halber Auflösung berechnen – die Map ist weich, das fällt nicht auf
+    const k = w * h > 90000 ? 0.5 : 1;
+    const W = Math.max(2, Math.round(w * k)), Hh = Math.max(2, Math.round(h * k));
+    const R = r * k, B = bezel * k;
+    const c = document.createElement('canvas'); c.width = W; c.height = Hh;
+    const ctx = c.getContext('2d');
+    const img = ctx.createImageData(W, Hh), d = img.data;
+    const boxH = openBottom ? Hh + B * 4 : Hh; // offene Unterkante (Sheet) → dort keine Brechung
+    const hw = W / 2, hh = boxH / 2, rr = Math.min(R, hw, hh);
+    for (let y = 0; y < Hh; y++) {
+      const py = y + 0.5 - hh, qy = Math.abs(py) - (hh - rr);
+      for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 4;
+        const px = x + 0.5 - hw, qx = Math.abs(px) - (hw - rr);
+        let e, nx = 0, ny = 0;
+        if (qx > 0 && qy > 0) { const L = Math.hypot(qx, qy) || 1; e = rr - L; nx = (qx / L) * Math.sign(px); ny = (qy / L) * Math.sign(py); }
+        else if (qx > qy) { e = rr - qx; nx = Math.sign(px); }
+        else { e = rr - qy; ny = Math.sign(py); }
+        let dx = 0, dy = 0;
+        if (e > 0 && e < B) {
+          const t = 1 - e / B;            // 1 = Glaskante, 0 = flaches Inneres
+          const m = Math.pow(t, 1.8);     // gewölbter Rand: Brechung nimmt zur Kante stark zu
+          dx = -nx * m; dy = -ny * m;     // nach innen sampeln → Inhalt wird an der Kante „gezogen“
+        }
+        d[i] = 128 + dx * 127; d[i + 1] = 128 + dy * 127; d[i + 2] = 128; d[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    const url = c.toDataURL();
+    if (mapCache.size > 24) mapCache.clear();
+    mapCache.set(key, url);
+    return url;
+  }
+
+  function build(item) {
+    const { el, o } = item;
+    const w = Math.round(el.offsetWidth), h = Math.round(el.offsetHeight);
+    if (!w || !h || (w === item.w && h === item.h)) return;
+    item.w = w; item.h = h;
+    const r = o.radius != null ? o.radius : parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    const map = displacementMap(w, h, Math.round(r), o.bezel, !!o.openBottom);
+    const s = o.strength;
+    const disp = (scale, out) => `<feDisplacementMap in="blur" in2="map" scale="${scale}" xChannelSelector="R" yChannelSelector="G" result="${out}"/>`;
+    const body = o.chroma
+      ? `${disp(s, 'dR')}<feColorMatrix in="dR" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="cR"/>
+         ${disp(s * 0.9, 'dG')}<feColorMatrix in="dG" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="cG"/>
+         ${disp(s * 0.8, 'dB')}<feColorMatrix in="dB" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="cB"/>
+         <feBlend in="cR" in2="cG" mode="screen" result="cRG"/><feBlend in="cRG" in2="cB" mode="screen" result="disp"/>`
+      : disp(s, 'disp');
+    item.filter.setAttribute('width', w);
+    item.filter.setAttribute('height', h);
+    item.filter.innerHTML = `<feGaussianBlur in="SourceGraphic" stdDeviation="${o.blur}" result="blur"/>
+      <feImage href="${map}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="map"/>
+      ${body}<feColorMatrix in="disp" type="saturate" values="${o.saturate || 1.6}"/>`;
+    apply(item);
+  }
+  function apply(item) {
+    const v = enabled && item.w ? `url(#${item.id})` : '';
+    item.el.style.backdropFilter = v;
+    item.el.style.webkitBackdropFilter = v;
+  }
+
+  const ro = typeof ResizeObserver !== 'undefined'
+    ? new ResizeObserver((entries) => requestAnimationFrame(() => entries.forEach((en) => {
+        const it = items.find((x) => x.el === en.target);
+        if (it && enabled) build(it);
+      })))
+    : null;
+
+  function register(el, o) {
+    if (!el) return;
+    const id = `lg${++seq}`;
+    const filter = document.createElementNS(NS, 'filter');
+    filter.setAttribute('id', id);
+    filter.setAttribute('x', '0'); filter.setAttribute('y', '0');
+    filter.setAttribute('filterUnits', 'userSpaceOnUse');
+    filter.setAttribute('primitiveUnits', 'userSpaceOnUse');
+    filter.setAttribute('color-interpolation-filters', 'sRGB');
+    defs.appendChild(filter);
+    const item = { el, o: { bezel: 18, strength: 30, blur: 1.5, chroma: true, ...o }, id, filter, w: 0, h: 0 };
+    items.push(item);
+    if (ro) ro.observe(el);
+    if (enabled) build(item);
+  }
+
+  // Glanzlicht folgt der Neigung des Handys
+  let la = 160, queued = false;
+  addEventListener('deviceorientation', (e) => {
+    if (e.gamma == null) return;
+    const target = 160 + Math.max(-40, Math.min(40, e.gamma)) * 1.3;
+    if (queued || Math.abs(target - la) < 2.5) return;
+    la = target; queued = true;
+    requestAnimationFrame(() => { queued = false; items.forEach((it) => it.el.style.setProperty('--la', `${la.toFixed(0)}deg`)); });
+  }, { passive: true });
+
+  return {
+    supported,
+    register,
+    refresh() { items.forEach((it) => { it.w = 0; if (enabled) build(it); }); },
+    setEnabled(on) {
+      const next = !!on && supported;
+      if (next === enabled && this.ready) return;
+      this.ready = true;
+      enabled = next;
+      document.documentElement.classList.toggle('lg', enabled);
+      items.forEach((it) => { if (enabled) { it.w = 0; build(it); } else apply(it); });
+    },
+  };
+})();
 
 /* ==========================================================
-   Konfetti
+   Darstellung: Hintergrund- & Akzentfarbe
+   ========================================================== */
+const BG_PRESETS = [
+  { name: 'Schwarz', color: '#000000' },
+  { name: 'Graphit', color: '#141416' },
+  { name: 'Nacht', color: '#0a1020' },
+  { name: 'Aubergine', color: '#160c22' },
+  { name: 'Tanne', color: '#08160f' },
+  { name: 'Espresso', color: '#18110c' },
+  { name: 'Bordeaux', color: '#1c080d' },
+];
+const ACCENTS = [
+  { id: 'violet', name: 'Violett', a: '#9d8cff', b: '#ff6fb0', ink: '#ffffff' },
+  { id: 'ocean', name: 'Ozean', a: '#4de1ff', b: '#5a7bff', ink: '#ffffff' },
+  { id: 'mint', name: 'Minze', a: '#3ee6a8', b: '#22b8ff', ink: '#04131a' },
+  { id: 'sunset', name: 'Sunset', a: '#ffb547', b: '#ff5f6d', ink: '#1a0a00' },
+  { id: 'rose', name: 'Rosé', a: '#ffa3d1', b: '#ff5f8a', ink: '#2a0614' },
+  { id: 'lime', name: 'Lime', a: '#d4ff5a', b: '#3ee6a8', ink: '#0d1a00' },
+  { id: 'mono', name: 'Silber', a: '#f2f2f7', b: '#9a9aa5', ink: '#000000' },
+];
+const hexToRgb = (h) => { const n = parseInt(String(h).replace('#', '').padEnd(6, '0').slice(0, 6), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const rgbToHex = (r, g, b) => '#' + [r, g, b].map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+const mixHex = (a, b, p) => { const x = hexToRgb(a), y = hexToRgb(b); return rgbToHex(...x.map((v, i) => v + (y[i] - v) * p)); };
+// Eigene Hintergrundfarben werden abgedunkelt, damit Text immer lesbar bleibt
+function darkEnough(hex) {
+  let [r, g, b] = hexToRgb(hex).map((v) => v / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  if (l <= 0.14) return rgbToHex(r * 255, g * 255, b * 255);
+  const k = 0.14 / l;
+  return rgbToHex(r * 255 * k, g * 255 * k, b * 255 * k);
+}
+function applyTheme() {
+  const t = state.settings.theme;
+  const bg = darkEnough(t.bg || '#000000');
+  const a = ACCENTS.find((x) => x.id === t.accent) || ACCENTS[0];
+  const s = document.documentElement.style;
+  s.setProperty('--bg', bg);
+  s.setProperty('--surface', mixHex(bg, '#ffffff', 0.075));
+  s.setProperty('--surface-2', mixHex(bg, '#ffffff', 0.13));
+  s.setProperty('--acc1', a.a);
+  s.setProperty('--acc2', a.b);
+  s.setProperty('--on-acc', a.ink);
+  const meta = $('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', bg);
+  document.documentElement.classList.toggle('anim-bg', !!t.animatedBg);
+  Bg.setEnabled(!!t.animatedBg, bg);
+  LiquidGlass.setEnabled(t.refraction !== false);
+}
+
+/* ==========================================================
+   Konfetti (zeitbasiert → gleich schnell bei 60 und 120 Hz)
    ========================================================== */
 const Confetti = (() => {
   const cv = $('#confetti');
   const ctx = cv.getContext('2d');
-  let parts = [], running = false;
-  const colors = ['#9d8cff', '#ff6fb0', '#3ee6a8', '#4de1ff', '#ffb547', '#ffffff'];
-  function size() { const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; ctx.setTransform(d, 0, 0, d, 0, 0); }
-  addEventListener('resize', size); size();
-  function burst(x = innerWidth / 2, y = innerHeight / 2, n = 120) {
+  let parts = [], running = false, last = 0;
+  const colors = () => {
+    const cs = getComputedStyle(document.documentElement);
+    return [cs.getPropertyValue('--acc1').trim() || '#9d8cff', cs.getPropertyValue('--acc2').trim() || '#ff6fb0', '#3ee6a8', '#4de1ff', '#ffb547', '#ffffff'];
+  };
+  function size() { const d = Math.min(devicePixelRatio || 1, 2); cv.width = innerWidth * d; cv.height = innerHeight * d; ctx.setTransform(d, 0, 0, d, 0, 0); }
+  function burst(x = innerWidth / 2, y = innerHeight / 2, n = 110) {
+    const cols = colors();
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2, s = 4 + Math.random() * 10;
       parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 6, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4,
-        w: 6 + Math.random() * 6, h: 4 + Math.random() * 8, c: colors[i % colors.length], life: 1, round: Math.random() < 0.3 });
+        w: 6 + Math.random() * 6, h: 4 + Math.random() * 8, c: cols[i % cols.length], life: 1, round: Math.random() < 0.3 });
     }
-    if (!running) { running = true; requestAnimationFrame(tick); }
+    if (!running) { running = true; size(); cv.classList.add('on'); last = performance.now(); requestAnimationFrame(tick); }
   }
-  function tick() {
+  function tick(now) {
+    const k = Math.min(3, Math.max(0.25, (now - last) / 16.667)); last = now;
     ctx.clearRect(0, 0, innerWidth, innerHeight);
     parts.forEach((p) => {
-      p.vy += 0.32; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= 0.009;
+      p.vy += 0.32 * k; p.vx *= Math.pow(0.985, k); p.x += p.vx * k; p.y += p.vy * k; p.rot += p.vr * k; p.life -= 0.009 * k;
       ctx.save(); ctx.globalAlpha = Math.max(0, p.life); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c;
       if (p.round) { ctx.beginPath(); ctx.arc(0, 0, p.w / 2, 0, 7); ctx.fill(); } else ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
       ctx.restore();
     });
     parts = parts.filter((p) => p.life > 0 && p.y < innerHeight + 40);
-    if (parts.length) requestAnimationFrame(tick); else { running = false; ctx.clearRect(0, 0, innerWidth, innerHeight); }
+    if (parts.length) requestAnimationFrame(tick);
+    else { running = false; ctx.clearRect(0, 0, innerWidth, innerHeight); cv.classList.remove('on'); }
   }
   return { burst };
 })();
@@ -273,6 +451,7 @@ addEventListener('resize', moveBlob);
 
 function render(animate = false) {
   $('#view-title').textContent = titles[ui.tab];
+  $('#navbar-title').textContent = titles[ui.tab];
   const d = new Date();
   $('#today-label').textContent = `${DAYS[wIdx(d)]}, ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
   viewActions = {};
@@ -282,7 +461,7 @@ function render(animate = false) {
   if (animate) { view.classList.remove('enter'); void view.offsetWidth; view.classList.add('enter'); }
   requestAnimationFrame(() => requestAnimationFrame(() => {
     $$('[data-offset]', view).forEach((el) => el.style.strokeDashoffset = el.dataset.offset);
-    $$('[data-width]', view).forEach((el) => el.style.width = el.dataset.width);
+    $$('[data-scale]', view).forEach((el) => el.style.transform = `scaleX(${el.dataset.scale})`);
   }));
   countUp(view);
 }
@@ -384,7 +563,7 @@ function renderHome() {
   const upcoming = [1, 2, 3].map((n, i) => {
     const d = addDays(today, n), p = planFor(d);
     const label = n === 1 ? 'Morgen' : DAYS[wIdx(d)];
-    return `<div class="item" data-act="showDay" data-day="${wIdx(d)}" style="--i:${i};--c:${p ? '#9d8cff' : '#555'}">
+    return `<div class="item" data-act="showDay" data-day="${wIdx(d)}" style="--i:${i};--c:${p ? 'var(--acc1)' : '#555'}">
       <div class="emo">${p ? '🏋️' : '😴'}</div>
       <div class="grow"><div class="title">${label} · ${p ? esc(p.name) : 'Ruhetag'}</div>
       <div class="sub">${p ? (p.groups || []).map((x) => G[x]?.name).filter(Boolean).join(', ') + ` · ${p.exercises.length} Übungen` : 'Regeneration ist Teil des Trainings'}</div></div>
@@ -394,7 +573,7 @@ function renderHome() {
   const preTaken = tot.entries.find((e) => /pre.?workout/i.test(e.name));
 
   return `
-  <div class="hero glass">
+  <div class="hero surface">
     <div class="glow"></div>
     <p class="muted small" style="margin:0 0 8px">${hello}${name} 👋</p>
     ${hasPlan ? `
@@ -405,7 +584,7 @@ function renderHome() {
       <div class="day-name">${plan ? esc(plan.name) : 'Erholung'}</div>
       ${plan ? `<div class="chips" style="margin-bottom:12px">${groupChips(plan.groups)}</div>
         <div class="list" style="gap:6px;margin-bottom:16px">${plan.exercises.slice(0, 4).map((x) =>
-          `<div class="small"><b>${esc(x.name)}</b> <span class="muted">· ${esc(x.sets)}×${esc(x.reps)}${x.weight ? ` · ${esc(x.weight)} kg` : ''}</span></div>`).join('')}
+          `<div class="small"><b>${esc(x.name)}</b>${exMeta(x) ? ` <span class="muted">· ${esc(exMeta(x))}</span>` : ''}${prBadge(x)}</div>`).join('')}
           ${plan.exercises.length > 4 ? `<div class="small muted">+ ${plan.exercises.length - 4} weitere</div>` : ''}</div>` : '<p class="muted" style="margin-top:0">Gönn deinen Muskeln Pause – sie wachsen in der Regeneration.</p>'}
       <div class="row">
         <button class="btn ${done ? 'ghost' : 'green'} grow" data-act="done">${done ? '↺ Rückgängig' : '✓ Im Gym gewesen'}</button>
@@ -416,16 +595,16 @@ function renderHome() {
       <button class="btn primary block" data-act="goPlan">Trainingsplan erstellen</button>`}
   </div>
 
-  <div class="card glass">
+  <div class="card surface">
     <div class="card-head"><h2>Diese Woche</h2><span class="badge">${weekVisits()} / ${plannedCount() || '–'} Trainings</span></div>
     <div class="week-strip">${strip}</div>
   </div>
 
-  <div class="card glass">
+  <div class="card surface">
     <div class="card-head"><h2>Ernährung heute</h2><button class="btn sm ghost" data-act="goNut">Details ›</button></div>
     <div class="rings">
       ${ring(round(tot.kcal), g.kcal, '#ff6fb0', 'kcal')}
-      ${ring(round(tot.protein), g.protein, '#9d8cff', 'Protein', ' g')}
+      ${ring(round(tot.protein), g.protein, '#a796ff', 'Protein', ' g')}
       ${ring(round(tot.water), g.water, '#4de1ff', 'Wasser', ' ml')}
       ${ring(round(tot.caffeine), g.caffeine, '#ffb547', 'Koffein', ' mg', true)}
     </div>
@@ -440,7 +619,7 @@ function renderHome() {
 
   ${hasPlan ? `<p class="section-label">Die nächsten Tage</p><div class="list">${upcoming}</div>` : ''}
 
-  ${!state.settings.notify ? `<div class="card glass row">
+  ${!state.settings.notify ? `<div class="card surface row">
     <div style="font-size:30px">🔔</div>
     <div class="grow"><h3>Erinnerungen</h3><div class="small muted">Lass dir täglich zeigen, was ansteht.</div></div>
     <button class="btn sm primary" data-act="notify">Aktivieren</button>
@@ -472,8 +651,8 @@ function openDayPreview(i) {
     ${p ? `<h3 style="font-size:22px;margin-bottom:10px">${esc(p.name)}</h3>
       <div class="chips" style="margin-bottom:14px">${groupChips(p.groups)}</div>
       <div class="list">${p.exercises.map((x, k) => `<div class="item" style="--i:${k}">
-        <div class="emo" style="--c:${G[x.group]?.color || '#9d8cff'}">${G[x.group]?.emoji || '🏋️'}</div>
-        <div class="grow"><div class="title">${esc(x.name)}</div><div class="sub">${esc(x.sets)} Sätze × ${esc(x.reps)}${x.weight ? ` · ${esc(x.weight)} kg` : ''}</div></div></div>`).join('')
+        <div class="emo" style="--c:${G[x.group]?.color || 'var(--acc1)'}">${G[x.group]?.emoji || '🏋️'}</div>
+        <div class="grow"><div class="title">${esc(x.name)}${prBadge(x)}</div>${exMeta(x) ? `<div class="sub">${esc(exMeta(x))}</div>` : ''}${x.note && !/^pr$/i.test(x.note.trim()) ? `<div class="note">📝 ${esc(x.note)}</div>` : ''}</div></div>`).join('')
         || '<div class="empty">Noch keine Übungen</div>'}</div>`
       : '<div class="empty"><span class="big">😴</span>Ruhetag</div>'}
   `);
@@ -494,12 +673,12 @@ function renderPlan() {
     ics: () => exportICS(),
   };
   const days = state.plan.map((p, i) => `
-    <div class="day-card glass ${p ? '' : 'rest'} ${i === ti ? 'today' : ''}" data-act="edit" data-day="${i}">
+    <div class="day-card surface ${p ? '' : 'rest'} ${i === ti ? 'today' : ''}" data-act="edit" data-day="${i}">
       <div class="dn">${DAYS_S[i]}</div>
       <div class="grow">
         <div class="title" style="font-weight:800;font-size:17px">${p ? esc(p.name) : 'Ruhetag'}</div>
         ${p ? `<div class="chips" style="margin-top:6px">${groupChips(p.groups)}</div>
-          <div class="sub small muted" style="margin-top:6px">${p.exercises.length} Übungen · ${p.exercises.reduce((a, x) => a + num(x.sets), 0)} Sätze</div>`
+          <div class="sub small muted" style="margin-top:6px">${p.exercises.length} Übungen${p.exercises.some((x) => num(x.sets)) ? ` · ${p.exercises.reduce((a, x) => a + num(x.sets), 0)} Sätze` : ''}</div>`
           : '<div class="sub small muted">Tippen zum Planen</div>'}
       </div>
       <span class="muted" style="font-size:20px">›</span>
@@ -508,7 +687,7 @@ function renderPlan() {
   return `
     <p class="section-label">Vorlagen</p>
     <div class="chips scroll">
-      ${window.PLAN_TEMPLATES.map((t) => `<button class="card glass" data-act="tpl" data-tpl="${t.id}" style="min-width:200px;text-align:left;border-radius:22px">
+      ${window.PLAN_TEMPLATES.map((t) => `<button class="card surface tpl-card ${t.id === 'mine' ? 'mine' : ''}" data-act="tpl" data-tpl="${t.id}">
         <div style="font-weight:800">${esc(t.name)}</div><div class="small muted" style="margin-top:4px">${esc(t.desc)}</div></button>`).join('')}
     </div>
     ${days}
@@ -530,19 +709,34 @@ function pickExercises(groups, perGroup = 2, offset = 0, exclude = []) {
   });
   return out;
 }
-const toPlanEx = (e, gid) => ({ id: uid(), name: e.name, group: gid, sets: e.sets, reps: e.reps, weight: '' });
+const toPlanEx = (e, gid) => ({ id: uid(), name: e.name, group: gid, sets: e.sets ?? '', reps: e.reps ?? '', weight: e.weight ?? '', note: e.note ?? '' });
+const fmtKg = (w) => String(w).replace(/\./g, ',');
+function exMeta(x) {
+  const parts = [];
+  if (x.sets && x.reps) parts.push(`${x.sets} × ${x.reps}`);
+  else if (x.reps) parts.push(`${x.reps} Wdh.`);
+  else if (x.sets) parts.push(`${x.sets} Sätze`);
+  if (x.weight) parts.push(`${fmtKg(x.weight)} kg`);
+  return parts.join(' · ');
+}
+const isPR = (x) => /\bpr\b/i.test(x.note || '');
+const prBadge = (x) => (isPR(x) ? ' <span class="badge pr">PR</span>' : '');
 
+function templatePlan(t) {
+  const seen = {};
+  return t.days.map((d) => {
+    if (!d) return null;
+    seen[d.name] = (seen[d.name] || 0);
+    const occ = seen[d.name]++;
+    if (d.exercises) return { name: d.name, groups: [...d.groups], exercises: d.exercises.map((x) => toPlanEx(x, x.group)) };
+    return { name: d.name, groups: [...d.groups], exercises: pickExercises(d.groups, d.groups.length > 3 ? 1 : 2, occ) };
+  });
+}
 function applyTemplate(id) {
   const t = window.PLAN_TEMPLATES.find((x) => x.id === id);
   if (!t) return;
   if (plannedCount() && !confirm(`Aktuellen Plan durch „${t.name}“ ersetzen?`)) return;
-  const seen = {};
-  state.plan = t.days.map((d) => {
-    if (!d) return null;
-    seen[d.name] = (seen[d.name] || 0);
-    const occ = seen[d.name]++;
-    return { name: d.name, groups: [...d.groups], exercises: pickExercises(d.groups, d.groups.length > 3 ? 1 : 2, occ) };
-  });
+  state.plan = templatePlan(t);
   save(); render(true);
   Confetti.burst(innerWidth / 2, innerHeight / 3, 80);
   toast(`✨ ${t.name} übernommen`);
@@ -597,7 +791,7 @@ function openDayEditor(i) {
     },
     custom: () => {
       const n = prompt('Name der Übung:');
-      if (n && n.trim()) { draft.exercises.push({ id: uid(), name: n.trim(), group: draft.groups[0] || '', sets: 3, reps: '10', weight: '' }); rerenderSheet(); }
+      if (n && n.trim()) { draft.exercises.push({ id: uid(), name: n.trim(), group: draft.groups[0] || '', sets: 3, reps: '10', weight: '', note: '' }); rerenderSheet(); }
     },
     save: () => {
       if (rest) state.plan[i] = null;
@@ -615,7 +809,7 @@ function openDayEditor(i) {
     return `
     <div class="sheet-title"><h2>${DAYS[i]}</h2><button class="btn sm primary" data-act="save">Speichern</button></div>
     <div class="form">
-      <label class="row card" style="background:rgba(255,255,255,.06);padding:12px 14px;border-radius:18px">
+      <label class="row setting-row">
         <span class="grow" style="font-weight:700">Trainingstag</span>
         <span class="switch"><input type="checkbox" data-ch="rest" ${rest ? '' : 'checked'}><span></span></span>
       </label>
@@ -627,7 +821,7 @@ function openDayEditor(i) {
 
       <div class="field"><span>Übungen (${draft.exercises.length})</span>
         <div class="list">
-        ${draft.exercises.map((x, k) => `<div class="ex-row" style="animation-delay:${k * 30}ms">
+        ${draft.exercises.map((x, k) => `<div class="ex-row" style="--i:${k}">
           <div class="ex-top">
             <span style="font-size:18px">${G[x.group]?.emoji || '🏋️'}</span>
             <span class="ex-name">${esc(x.name)}</span>
@@ -639,6 +833,7 @@ function openDayEditor(i) {
             <label>Wdh.<input data-in="ex" data-f="reps" data-id="${x.id}" value="${esc(x.reps)}"></label>
             <label>kg<input inputmode="decimal" data-in="ex" data-f="weight" data-id="${x.id}" value="${esc(x.weight)}" placeholder="–"></label>
           </div>
+          <input class="ex-note" data-in="ex" data-f="note" data-id="${x.id}" value="${esc(x.note || '')}" placeholder="Notiz, z. B. PR oder Arbeitsgewicht">
         </div>`).join('') || '<div class="empty small">Noch keine Übungen – nutze die Vorschläge unten 👇</div>'}
         </div>
         <button class="btn ghost sm" data-act="custom" style="align-self:flex-start">＋ Eigene Übung</button>
@@ -687,7 +882,7 @@ function exerciseList() {
     : (LIB[ui.exGroup] || []).map((e) => ({ ...e, group: ui.exGroup }));
   if (!items.length) return '<div class="empty"><span class="big">🤷</span>Keine Übung gefunden</div>';
   return items.map((e, k) => `
-    <div class="item glass" style="--i:${k};--c:${G[e.group].color};align-items:flex-start" data-act="tip">
+    <div class="item surface" style="--i:${k};--c:${G[e.group].color};align-items:flex-start" data-act="tip">
       <div class="emo">${G[e.group].emoji}</div>
       <div class="grow">
         <div class="title">${esc(e.name)}</div>
@@ -716,7 +911,7 @@ function openAddToDay(name, gid) {
     <div class="sheet-title"><h2>Zu welchem Tag?</h2></div>
     <p class="muted" style="margin-top:-8px">${esc(name)}</p>
     <div class="list">${state.plan.map((p, i) => `<button class="item" style="--i:${i};text-align:left" data-act="day" data-day="${i}">
-      <div class="emo" style="--c:${p ? '#9d8cff' : '#555'}">${DAYS_S[i]}</div>
+      <div class="emo" style="--c:${p ? 'var(--acc1)' : '#555'}">${DAYS_S[i]}</div>
       <div class="grow"><div class="title">${DAYS[i]}</div><div class="sub">${p ? esc(p.name) + ` · ${p.exercises.length} Übungen` : 'Ruhetag → wird zum Trainingstag'}</div></div>
       <span class="muted">＋</span></button>`).join('')}</div>`);
 }
@@ -777,31 +972,31 @@ function renderNutrition() {
   };
   const bar = (label, val, goal, c1, c2) => `<div class="macro">
     <div class="mtop"><span>${label}</span><span><span data-count="${round(val)}">0</span> <span class="muted">/ ${goal} g</span></span></div>
-    <div class="bar-track"><div class="bar-fill" style="--c1:${c1};--c2:${c2}" data-width="${Math.min(100, goal ? val / goal * 100 : 0)}%"></div></div></div>`;
+    <div class="bar-track"><div class="bar-fill" style="--c1:${c1};--c2:${c2}" data-scale="${Math.min(1, goal ? val / goal : 0)}"></div></div></div>`;
   const kinds = { meal: '🍽️ Mahlzeit', drink: '🥤 Getränk', supp: '💊 Supplement' };
   const sorted = [...tot.entries].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
   const pre = tot.entries.filter((e) => /pre.?workout/i.test(e.name));
 
   return `
     <div class="row">
-      <button class="icon-btn glass" data-act="prev" aria-label="Vorheriger Tag">‹</button>
+      <button class="icon-btn surface" data-act="prev" aria-label="Vorheriger Tag">‹</button>
       <button class="btn ghost grow" data-act="today">${isToday ? 'Heute' : `${DAYS[wIdx(d)]}, ${d.getDate()}. ${MONTHS[d.getMonth()]}`}</button>
-      <button class="icon-btn glass" data-act="next" aria-label="Nächster Tag">›</button>
+      <button class="icon-btn surface" data-act="next" aria-label="Nächster Tag">›</button>
     </div>
-    <div class="card glass">
+    <div class="card surface">
       <div class="rings">
         ${ring(round(tot.kcal), g.kcal, '#ff6fb0', 'kcal')}
-        ${ring(round(tot.protein), g.protein, '#9d8cff', 'Protein', ' g')}
+        ${ring(round(tot.protein), g.protein, '#a796ff', 'Protein', ' g')}
         ${ring(round(tot.water), g.water, '#4de1ff', 'Flüssigkeit', ' ml')}
         ${ring(round(tot.caffeine), g.caffeine, '#ffb547', 'Koffein', ' mg', true)}
       </div>
     </div>
-    <div class="card glass form" style="gap:12px">
+    <div class="card surface form" style="gap:12px">
       ${bar('🥩 Protein', tot.protein, g.protein, '#9d8cff', '#ff6fb0')}
       ${bar('🍚 Kohlenhydrate', tot.carbs, g.carbs, '#ffb547', '#ff7a59')}
       ${bar('🥑 Fett', tot.fat, g.fat, '#3ee6a8', '#22b8ff')}
     </div>
-    ${pre.length ? `<div class="card glass row" style="--i:0">
+    ${pre.length ? `<div class="card surface row" style="--i:0">
       <div style="font-size:30px">⚡</div>
       <div class="grow"><h3>Pre-Workout genommen</h3>
         <div class="small muted">${pre.map((p) => `${esc(p.time)} Uhr${p.caffeine ? ` · ${esc(p.caffeine)} mg Koffein` : ''}`).join(' | ')}</div></div>
@@ -812,7 +1007,7 @@ function renderNutrition() {
     </div>
     <p class="section-label">Einträge (${sorted.length})</p>
     <div class="list">
-      ${sorted.map((e, k) => `<div class="item glass" style="--i:${k};--c:${e.kind === 'meal' ? '#ff6fb0' : e.kind === 'drink' ? '#4de1ff' : '#ffb547'}" data-act="edit" data-id="${e.id}">
+      ${sorted.map((e, k) => `<div class="item surface" style="--i:${k};--c:${e.kind === 'meal' ? '#ff6fb0' : e.kind === 'drink' ? '#4de1ff' : '#ffb547'}" data-act="edit" data-id="${e.id}">
         <div class="emo">${esc(e.emoji || (e.kind === 'meal' ? '🍽️' : e.kind === 'drink' ? '🥤' : '💊'))}</div>
         <div class="grow"><div class="title">${esc(e.name)}</div>
           <div class="sub">${esc(e.time)}${entryInfo(e)}</div></div>
@@ -918,11 +1113,11 @@ function renderCalendar() {
 
   return `
     <div class="stats">
-      <div class="stat glass"><div class="num" data-count="${weekVisits()}">0</div><div class="lbl">Diese Woche</div></div>
-      <div class="stat glass"><div class="num" data-count="${monthVisits.length}">0</div><div class="lbl">${MONTHS[m.getMonth()]}</div></div>
-      <div class="stat glass"><div class="num"><span data-count="${weekStreak()}">0</span>🔥</div><div class="lbl">Wochen-Streak</div></div>
+      <div class="stat surface"><div class="num" data-count="${weekVisits()}">0</div><div class="lbl">Diese Woche</div></div>
+      <div class="stat surface"><div class="num" data-count="${monthVisits.length}">0</div><div class="lbl">${MONTHS[m.getMonth()]}</div></div>
+      <div class="stat surface"><div class="num"><span data-count="${weekStreak()}">0</span>🔥</div><div class="lbl">Wochen-Streak</div></div>
     </div>
-    <div class="card glass">
+    <div class="card surface">
       <div class="card-head">
         <button class="icon-btn" data-act="prev" aria-label="Vorheriger Monat">‹</button>
         <h2>${MONTHS[m.getMonth()]} ${m.getFullYear()}</h2>
@@ -938,7 +1133,7 @@ function renderCalendar() {
     </div>
     <p class="section-label">Trainings im ${MONTHS[m.getMonth()]}</p>
     <div class="list">
-      ${monthVisits.reverse().map((k, i) => { const d = fromKey(k), v = state.visits[k]; return `<div class="item glass" style="--i:${i};--c:#3ee6a8" data-act="day" data-key="${k}">
+      ${monthVisits.reverse().map((k, i) => { const d = fromKey(k), v = state.visits[k]; return `<div class="item surface" style="--i:${i};--c:#3ee6a8" data-act="day" data-key="${k}">
         <div class="emo">✅</div><div class="grow"><div class="title">${esc(v.workout || 'Training')}</div>
         <div class="sub">${DAYS[wIdx(d)]}, ${d.getDate()}. ${MONTHS[d.getMonth()]}${v.note ? ' · ' + esc(v.note) : ''}</div></div></div>`; }).join('')
         || '<div class="empty"><span class="big">📅</span>Tippe auf einen Tag, um dein Training einzutragen.</div>'}
@@ -970,7 +1165,7 @@ function openCalendarDay(key) {
       ${p ? `<div class="card" style="background:rgba(255,255,255,.06);border-radius:18px;padding:14px">
         <div class="small muted">Geplant</div><div style="font-weight:800;font-size:18px;margin:2px 0 8px">${esc(p.name)}</div>
         <div class="chips">${groupChips(p.groups)}</div></div>` : '<p class="muted" style="margin:0">Laut Plan ein Ruhetag 😴</p>'}
-      <label class="row card" style="background:rgba(255,255,255,.06);padding:12px 14px;border-radius:18px">
+      <label class="row setting-row">
         <span class="grow" style="font-weight:700">🏋️ Im Gym gewesen</span>
         <span class="switch"><input type="checkbox" data-ch="went" ${went ? 'checked' : ''}><span></span></span>
       </label>
@@ -984,6 +1179,39 @@ function openCalendarDay(key) {
 /* ==========================================================
    Einstellungen
    ========================================================== */
+function setTheme(patch, rerender = true) {
+  Object.assign(state.settings.theme, patch);
+  applyTheme();
+  save();
+  haptic();
+  if (rerender) rerenderSheet();
+}
+function appearanceHTML() {
+  const t = state.settings.theme;
+  const cur = String(t.bg || '').toLowerCase();
+  const custom = !BG_PRESETS.some((b) => b.color === cur);
+  return `
+    <div class="field"><span>Hintergrund</span>
+      <div class="swatches">
+        ${BG_PRESETS.map((b) => `<button class="swatch ${cur === b.color ? 'on' : ''}" data-act="bg" data-c="${b.color}"><i style="background:${b.color}"></i>${b.name}</button>`).join('')}
+        <label class="swatch ${custom ? 'on' : ''}"><i style="background:${custom ? esc(darkEnough(cur)) : 'conic-gradient(#ff5f6d,#ffb547,#d4ff5a,#3ee6a8,#4de1ff,#9d8cff,#ff6fb0,#ff5f6d)'}"></i>Eigene
+          <input type="color" data-in="bgc" data-ch="bgc" value="${esc(custom ? cur : '#1a1a2e')}"></label>
+      </div>
+    </div>
+    <div class="field"><span>Akzentfarbe</span>
+      <div class="swatches">
+        ${ACCENTS.map((a) => `<button class="swatch ${t.accent === a.id ? 'on' : ''}" data-act="acc" data-id="${a.id}"><i style="background:linear-gradient(135deg,${a.a},${a.b})"></i>${a.name}</button>`).join('')}
+      </div>
+    </div>
+    <label class="row setting-row">
+      <span class="grow"><b>Liquid Glass</b><br><span class="small muted">${LiquidGlass.supported ? 'Echtzeit-Lichtbrechung an den Glaskanten der Menüs' : 'Auf diesem Browser nur als Milchglas verfügbar'}</span></span>
+      <span class="switch"><input type="checkbox" data-ch="refr" ${t.refraction !== false && LiquidGlass.supported ? 'checked' : ''} ${LiquidGlass.supported ? '' : 'disabled'}><span></span></span>
+    </label>
+    <label class="row setting-row">
+      <span class="grow"><b>Animierter Hintergrund</b><br><span class="small muted">Farbverlauf in Bewegung · braucht mehr Akku</span></span>
+      <span class="switch"><input type="checkbox" data-ch="anim" ${t.animatedBg ? 'checked' : ''}><span></span></span>
+    </label>`;
+}
 function openSettings() {
   const g = { ...state.goals }, s = { ...state.settings };
   sheetActions = {
@@ -993,6 +1221,12 @@ function openSettings() {
       if (el.checked) { const ok = await enableNotifications(true); s.notify = ok; el.checked = ok; }
       else { s.notify = false; }
     },
+    bg: (el) => setTheme({ bg: el.dataset.c }),
+    acc: (el) => setTheme({ accent: el.dataset.id }),
+    'in:bgc': (el) => setTheme({ bg: el.value }, false),
+    'ch:bgc': () => rerenderSheet(),
+    'ch:refr': (el) => setTheme({ refraction: el.checked }, false),
+    'ch:anim': (el) => setTheme({ animatedBg: el.checked }, false),
     test: () => sendReminder(true),
     ics: () => exportICS(),
     export: () => {
@@ -1005,18 +1239,19 @@ function openSettings() {
         try {
           const data = JSON.parse(await inp.files[0].text());
           if (!data.plan) throw new Error();
-          state = { ...defaults(), ...data }; save(); closeSheet(); render(true); toast('✅ Backup geladen');
+          state = hydrate(data); applyTheme(); save(); closeSheet(); render(true); toast('✅ Backup geladen');
         } catch (_) { toast('❌ Ungültige Datei'); }
       };
       inp.click();
     },
     reset: () => {
       if (!confirm('Wirklich ALLE Daten löschen?')) return;
-      state = defaults(); save(); closeSheet(); render(true); toast('Alles zurückgesetzt');
+      state = defaults(); applyTheme(); save(); closeSheet(); render(true); toast('Alles zurückgesetzt');
     },
     save: () => {
       state.goals = g;
-      state.settings = { ...state.settings, ...s, notify: state.settings.notify || s.notify };
+      const { theme: _theme, ...rest } = s; // Darstellung wird live gespeichert
+      state.settings = { ...state.settings, ...rest, notify: state.settings.notify || s.notify };
       if (!s.notify) state.settings.notify = false;
       save(); closeSheet(); render(); toast('💾 Gespeichert');
       checkReminder();
@@ -1026,6 +1261,9 @@ function openSettings() {
     <div class="sheet-title"><h2>Einstellungen</h2><button class="btn sm primary" data-act="save">Fertig</button></div>
     <div class="form">
       <label class="field"><span>Dein Name</span><input data-in="s" data-f="name" value="${esc(s.name)}" placeholder="optional"></label>
+
+      <p class="section-label" style="margin:6px 0 0">🎨 Darstellung</p>
+      ${appearanceHTML()}
 
       <p class="section-label" style="margin:6px 0 0">🎯 Tagesziele</p>
       <div class="grid-2">
@@ -1038,7 +1276,7 @@ function openSettings() {
       </div>
 
       <p class="section-label" style="margin:6px 0 0">🔔 Erinnerungen</p>
-      <label class="row card" style="background:rgba(255,255,255,.06);padding:12px 14px;border-radius:18px">
+      <label class="row setting-row">
         <span class="grow"><b>Push-Benachrichtigungen</b><br><span class="small muted">Täglich: was heute & die nächsten Tage ansteht</span></span>
         <span class="switch"><input type="checkbox" data-ch="notify" ${state.settings.notify ? 'checked' : ''}><span></span></span>
       </label>
@@ -1215,7 +1453,7 @@ function exportICS() {
     let d = new Date(); d.setHours(0, 0, 0, 0);
     while (wIdx(d) !== i) d = addDays(d, 1);
     const ds = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${hh}${mm}00`;
-    const desc = p.exercises.map((x) => `• ${x.name} – ${x.sets}×${x.reps}${x.weight ? ` @ ${x.weight} kg` : ''}`).join('\n');
+    const desc = p.exercises.map((x) => `• ${x.name}${exMeta(x) ? ` – ${exMeta(x)}` : ''}${x.note ? ` (${x.note})` : ''}`).join('\n');
     lines.push('BEGIN:VEVENT', `UID:glassgym-${i}-${uid()}@glassgym`, `DTSTAMP:${stamp}`, `DTSTART:${ds}`, 'DURATION:PT1H30M',
       `RRULE:FREQ=WEEKLY;BYDAY=${BYDAY[i]}`, `SUMMARY:${icsEsc('🏋️ ' + p.name)}`, `DESCRIPTION:${icsEsc(desc)}`,
       'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEsc('Morgen: ' + p.name)}`, 'TRIGGER:-P1D', 'END:VALARM',
@@ -1228,6 +1466,46 @@ function exportICS() {
 }
 
 /* ---------- Start ---------- */
+// Beim ersten Start mit leerem Plan: deinen eigenen Plan übernehmen
+if (!state.settings.seeded) {
+  const mine = window.PLAN_TEMPLATES.find((t) => t.id === 'mine');
+  if (mine && plannedCount() === 0) state.plan = templatePlan(mine);
+  state.settings.seeded = true;
+  save();
+}
+
+// Liquid Glass nur auf den Menüs
+LiquidGlass.register($('#tabbar'), { bezel: 18, strength: 24, blur: 3, saturate: 1.8, chroma: true });
+LiquidGlass.register($('#settings-btn'), { bezel: 16, strength: 26, blur: 0.8, chroma: true });
+LiquidGlass.register($('#navbar'), { bezel: 14, strength: 22, blur: 3, chroma: true });
+LiquidGlass.register($('#toast'), { bezel: 14, strength: 24, blur: 4, chroma: true });
+LiquidGlass.register(sheet, { bezel: 26, strength: 44, blur: 18, saturate: 1.5, chroma: false, openBottom: true });
+applyTheme();
+
+// Glas-Kopfzeile erscheint beim Scrollen
+(() => {
+  const nav = $('#navbar');
+  let shown = false, ticking = false;
+  addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      const s = scrollY > 72;
+      if (s !== shown) { shown = s; nav.classList.toggle('show', s); }
+    });
+  }, { passive: true });
+  nav.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+})();
+
+// Tab-Leiste: Glas gibt beim Berühren federnd nach
+(() => {
+  const bar = $('#tabbar');
+  const up = () => bar.classList.remove('pressed');
+  bar.addEventListener('pointerdown', () => bar.classList.add('pressed'));
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => bar.addEventListener(ev, up));
+})();
+
 render(true);
 requestAnimationFrame(moveBlob);
 checkReminder();

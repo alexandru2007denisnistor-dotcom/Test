@@ -10,6 +10,7 @@ window.MUSCLE_GROUPS = [
   { id: 'bauch',      name: 'Bauch',      emoji: '🧱', color: '#4de1ff' },
   { id: 'waden',      name: 'Waden',      emoji: '🦶', color: '#c3f75a' },
   { id: 'unterarme',  name: 'Unterarme',  emoji: '✊', color: '#f78bd8' },
+  { id: 'calisthenics', name: 'Calisthenics', emoji: '🤸', color: '#5ad1ff' },
   { id: 'cardio',     name: 'Cardio',     emoji: '❤️‍🔥', color: '#ff4d6d' },
 ];
 
@@ -24,6 +25,7 @@ window.EXERCISES = {
     { name: 'Dips (Brust-Fokus)', equip: 'Dipstation', level: 2, sets: 3, reps: '8-12', tip: 'Oberkörper nach vorne lehnen.' },
     { name: 'Liegestütze', equip: 'Körpergewicht', level: 1, sets: 3, reps: 'max', tip: 'Körper bildet eine Linie, Ellbogen ca. 45°.' },
     { name: 'Brustpresse (Maschine)', equip: 'Maschine', level: 1, sets: 3, reps: '10-12', tip: 'Ideal zum Ausbelasten am Ende.' },
+    { name: 'Brustpresse Schrägbank (Maschine)', equip: 'Maschine', level: 1, sets: 3, reps: '8-12', tip: 'Obere Brust, Schulterblätter an der Lehne lassen.' },
   ],
   ruecken: [
     { name: 'Klimmzüge', equip: 'Klimmzugstange', level: 2, sets: 4, reps: '6-10', tip: 'Brust zur Stange, Schulterblätter nach unten ziehen.' },
@@ -34,6 +36,8 @@ window.EXERCISES = {
     { name: 'Kreuzheben', equip: 'Langhantel', level: 3, sets: 3, reps: '4-6', tip: 'Neutraler Rücken, Stange nah am Körper.' },
     { name: 'T-Bar Rudern', equip: 'T-Bar', level: 2, sets: 3, reps: '8-10', tip: 'Für einen dicken mittleren Rücken.' },
     { name: 'Straight-Arm Pulldown', equip: 'Kabelzug', level: 1, sets: 3, reps: '12-15', tip: 'Arme gestreckt, Lat isoliert.' },
+    { name: 'Close Grip Pulldowns', equip: 'Kabelzug', level: 1, sets: 3, reps: '8-12', tip: 'Enger Neutralgriff, Ellbogen Richtung Hüfte ziehen.' },
+    { name: 'Rudern brustgestützt (Maschine)', equip: 'Maschine', level: 1, sets: 3, reps: '8-12', tip: 'Brust bleibt am Polster – kein Schwung aus dem unteren Rücken.' },
   ],
   schultern: [
     { name: 'Schulterdrücken (Langhantel)', equip: 'Langhantel', level: 2, sets: 4, reps: '6-8', tip: 'Core anspannen, kein Hohlkreuz.' },
@@ -44,6 +48,8 @@ window.EXERCISES = {
     { name: 'Reverse Butterfly', equip: 'Maschine', level: 1, sets: 3, reps: '12-15', tip: 'Trainiert die hintere Schulter.' },
     { name: 'Arnold Press', equip: 'Kurzhanteln', level: 2, sets: 3, reps: '8-12', tip: 'Drehbewegung trifft alle Schulterköpfe.' },
     { name: 'Frontheben', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '10-12', tip: 'Nicht schwingen, kontrolliert ablassen.' },
+    { name: 'Seitheben an der Maschine', equip: 'Maschine', level: 1, sets: 3, reps: '10-15', tip: 'Ellbogen führen, oben kurz halten.' },
+    { name: 'Schulterpresse (Maschine)', equip: 'Maschine', level: 1, sets: 3, reps: '8-12', tip: 'Griffe auf Kinnhöhe starten, nicht ganz durchstrecken.' },
   ],
   bizeps: [
     { name: 'Langhantel-Curls', equip: 'Langhantel', level: 1, sets: 3, reps: '8-12', tip: 'Ellbogen fixiert am Körper.' },
@@ -52,6 +58,8 @@ window.EXERCISES = {
     { name: 'Scott Curls', equip: 'SZ-Stange', level: 2, sets: 3, reps: '10-12', tip: 'Volle Streckung unten, kein Abfälschen.' },
     { name: 'Schrägbank-Curls', equip: 'Kurzhanteln', level: 2, sets: 3, reps: '10-12', tip: 'Langer Bizepskopf maximal gedehnt.' },
     { name: 'Kabel-Curls', equip: 'Kabelzug', level: 1, sets: 3, reps: '12-15', tip: 'Konstante Spannung, toller Finisher.' },
+    { name: 'Bayesian Curls', equip: 'Kabelzug', level: 2, sets: 3, reps: '10-12', tip: 'Mit dem Rücken zum Kabel – maximale Dehnung des Bizeps.' },
+    { name: 'Preacher Curls einarmig', equip: 'Kurzhantel', level: 1, sets: 3, reps: '10-12', tip: 'Langsam ablassen, unten nicht abfedern.' },
   ],
   trizeps: [
     { name: 'Trizepsdrücken am Kabel', equip: 'Kabelzug', level: 1, sets: 3, reps: '10-15', tip: 'Ellbogen bleiben am Körper.' },
@@ -70,6 +78,7 @@ window.EXERCISES = {
     { name: 'Beinbeuger liegend', equip: 'Maschine', level: 1, sets: 3, reps: '10-12', tip: 'Langsam ablassen.' },
     { name: 'Ausfallschritte', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '10/Seite', tip: 'Knie hinten fast am Boden.' },
     { name: 'Hack Squat', equip: 'Maschine', level: 2, sets: 3, reps: '8-12', tip: 'Super für den Quadrizeps.' },
+    { name: 'Adduktoren-Maschine', equip: 'Maschine', level: 1, sets: 3, reps: '12-15', tip: 'Kontrolliert schließen, langsam öffnen.' },
   ],
   po: [
     { name: 'Hip Thrust', equip: 'Langhantel', level: 2, sets: 4, reps: '8-12', tip: 'Oben Po maximal anspannen, Kinn zur Brust.' },
@@ -98,6 +107,16 @@ window.EXERCISES = {
     { name: 'Reverse Curls', equip: 'SZ-Stange', level: 1, sets: 3, reps: '10-12', tip: 'Obergriff, trifft Brachioradialis.' },
     { name: "Farmer's Walk", equip: 'Kurzhanteln', level: 1, sets: 3, reps: '30-40 m', tip: 'Schwer greifen, aufrecht gehen.' },
     { name: 'Dead Hang', equip: 'Klimmzugstange', level: 1, sets: 3, reps: 'max s', tip: 'Verbessert die Griffkraft enorm.' },
+  ],
+  calisthenics: [
+    { name: 'Klimmzüge (strikt)', equip: 'Klimmzugstange', level: 2, sets: 4, reps: '5-10', tip: 'Ohne Schwung, Kinn über die Stange.' },
+    { name: 'Muscle-Up', equip: 'Klimmzugstange', level: 3, sets: 4, reps: '3-5', tip: 'Explosiver Zug bis zur Hüfte, dann schnell übergreifen.' },
+    { name: 'Ring Dips', equip: 'Ringe', level: 2, sets: 3, reps: '6-10', tip: 'Ringe oben nach außen drehen (RTO).' },
+    { name: 'Pike Push-Ups', equip: 'Körpergewicht', level: 1, sets: 3, reps: '8-12', tip: 'Vorstufe zum Handstand-Drücken.' },
+    { name: 'Handstand an der Wand', equip: 'Körpergewicht', level: 2, sets: 4, reps: '30-45 s', tip: 'Körper gestreckt, Schultern aktiv zu den Ohren.' },
+    { name: 'L-Sit', equip: 'Parallettes', level: 2, sets: 4, reps: '10-20 s', tip: 'Schultern runterdrücken, Beine gestreckt.' },
+    { name: 'Front Lever (Progression)', equip: 'Klimmzugstange', level: 3, sets: 4, reps: '8-12 s', tip: 'Tuck → Advanced Tuck → One Leg → Full.' },
+    { name: 'Pistol Squats', equip: 'Körpergewicht', level: 3, sets: 3, reps: '5/Seite', tip: 'Anfangs an einem Pfosten festhalten.' },
   ],
   cardio: [
     { name: 'Laufband Intervalle', equip: 'Laufband', level: 2, sets: 1, reps: '20 min', tip: '1 min schnell / 1 min locker.' },
@@ -146,3 +165,66 @@ window.PLAN_TEMPLATES = [
     ],
   },
 ];
+
+/* Dein eigener Plan (aus deinen Notizen übernommen) */
+const X = (name, group, weight = '', reps = '', note = '', sets = '') => ({ name, group, weight, reps, note, sets });
+window.PLAN_TEMPLATES.unshift({
+  id: 'mine', name: '📝 Mein Plan', desc: 'Aus deinen Notizen · Mo, Mi, Fr, Sa, So',
+  days: [
+    { name: 'Brust · Rücken · Schulter', groups: ['brust', 'ruecken', 'schultern'], exercises: [
+      X('Butterfly', 'brust', '60', '', 'PR'),
+      X('Brustpresse (Schrägbank)', 'brust', '25', '', 'PR'),
+      X('Brustpresse sitzend', 'brust', '35', '', 'PR'),
+      X('Enges Rudern', 'ruecken', '65'),
+      X('Close Grip Pulldowns', 'ruecken', '75', '', 'PR'),
+      X('Rudern brustgestützt', 'ruecken', '40'),
+      X('Lat Pulldowns', 'ruecken', '70'),
+      X('Klimmzüge mit Zusatzgewicht', 'ruecken', '22,5', '', 'Kurzhantel als Zusatzgewicht'),
+      X('Reverse Butterfly', 'schultern', '35'),
+      X('Seitheben an der Maschine', 'schultern', '32,5'),
+      X('Schulterpresse', 'schultern', '25'),
+    ] },
+    null,
+    { name: 'Beine · Arme · Schulter', groups: ['bizeps', 'trizeps', 'beine', 'schultern'], exercises: [
+      X('Preacher Curls', 'bizeps', '42,5'),
+      X('Preacher Curls einarmig', 'bizeps', '12,5'),
+      X('T-Bar Curls', 'bizeps', '80', '', 'Arbeitsgewicht · PR 100 kg'),
+      X('Trizeps Pushdowns', 'trizeps', '30/25'),
+      X('Beinstrecker', 'beine'),
+      X('Bayesian Curls', 'bizeps', '65'),
+      X('Overhead Trizeps Extensions', 'trizeps', '75'),
+      X('Beinpresse', 'beine'),
+      X('Seitheben an der Maschine', 'schultern', '32,5'),
+      X('Hammer Curls', 'bizeps', '20'),
+      X('Dips', 'trizeps'),
+      X('Schulterpresse', 'schultern'),
+      X('Adduktoren-Maschine', 'beine'),
+    ] },
+    null,
+    { name: 'Oberkörper', groups: ['brust', 'ruecken', 'schultern', 'bizeps', 'trizeps'], exercises: [
+      X('Butterfly', 'brust', '55', '8-10'),
+      X('Preacher Curls', 'bizeps', '37,5', '10'),
+      X('Trizeps Pushdowns', 'trizeps', '30/25', '8 / 8-10', '1. Satz 30 kg × 8, 2. Satz 25 kg × 8–10', '2'),
+      X('Enges Rudern', 'ruecken', '60', '10'),
+      X('Seitheben (Maschine oder Kabelturm)', 'schultern', '', '', 'Kabelturm 30 kg × 4, Arbeitsgewicht 20–25 kg · Maschine 30,25 kg'),
+      X('Lat Pulldowns', 'ruecken'),
+      X('Overhead Trizeps Extensions', 'trizeps', '65', '8'),
+      X('Hammer Curls', 'bizeps', '17,5', '22'),
+      X('Brustpresse', 'brust'),
+      X('Bayesian Curls oder T-Bar Curls', 'bizeps'),
+      X('Brustpresse (Schrägbank)', 'brust', '20', '8'),
+      X('Schulterpresse', 'schultern'),
+    ] },
+    { name: 'Calisthenics', groups: ['calisthenics'], exercises: [
+      X('Calisthenics trainieren', 'calisthenics'),
+    ] },
+    { name: 'Beine', groups: ['beine', 'po', 'bauch'], exercises: [
+      X('Beinstrecker', 'beine', '65'),
+      X('Adduktoren-Maschine', 'beine', '75-80'),
+      X('Abduktoren-Maschine', 'po', '70'),
+      X('Beinpresse', 'beine', '80'),
+      X('Kniebeugen (Squats)', 'beine'),
+      X('Bauch', 'bauch'),
+    ] },
+  ],
+});

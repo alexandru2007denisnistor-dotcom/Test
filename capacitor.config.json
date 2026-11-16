@@ -2,9 +2,9 @@
   "appId": "app.glassgym.training",
   "appName": "GlassGym",
   "webDir": "www",
-  "backgroundColor": "#0b0820",
+  "backgroundColor": "#000000",
   "android": {
-    "backgroundColor": "#0b0820"
+    "backgroundColor": "#000000"
   },
   "plugins": {
     "SystemBars": {
