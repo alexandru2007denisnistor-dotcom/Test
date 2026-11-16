@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.ProEdit" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+    </style>
+    <color name="bg">#FF0E0F12</color>
+    <color name="accent">#FF00D1C1</color>
+</resources>
