@@ -1,0 +1,148 @@
+/* Übungsbibliothek nach Muskelgruppen */
+window.MUSCLE_GROUPS = [
+  { id: 'brust',      name: 'Brust',      emoji: '🛡️', color: '#ff5f9e' },
+  { id: 'ruecken',    name: 'Rücken',     emoji: '🦅', color: '#5ab0ff' },
+  { id: 'schultern',  name: 'Schultern',  emoji: '🏔️', color: '#ffb547' },
+  { id: 'bizeps',     name: 'Bizeps',     emoji: '💪', color: '#a68bff' },
+  { id: 'trizeps',    name: 'Trizeps',    emoji: '🔱', color: '#7c6cff' },
+  { id: 'beine',      name: 'Beine',      emoji: '🦵', color: '#3ee6a8' },
+  { id: 'po',         name: 'Po',         emoji: '🍑', color: '#ff7a59' },
+  { id: 'bauch',      name: 'Bauch',      emoji: '🧱', color: '#4de1ff' },
+  { id: 'waden',      name: 'Waden',      emoji: '🦶', color: '#c3f75a' },
+  { id: 'unterarme',  name: 'Unterarme',  emoji: '✊', color: '#f78bd8' },
+  { id: 'cardio',     name: 'Cardio',     emoji: '❤️‍🔥', color: '#ff4d6d' },
+];
+
+/* level: 1 Einsteiger, 2 Fortgeschritten, 3 Profi */
+window.EXERCISES = {
+  brust: [
+    { name: 'Bankdrücken (Langhantel)', equip: 'Langhantel', level: 2, sets: 4, reps: '6-8', tip: 'Schulterblätter zusammen, Füße fest am Boden, Stange zur unteren Brust.' },
+    { name: 'Schrägbankdrücken (Kurzhantel)', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '8-12', tip: 'Bank auf 30°, betont die obere Brust.' },
+    { name: 'Flachbank Kurzhantel-Drücken', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '8-12', tip: 'Größerer Bewegungsradius als mit der Langhantel.' },
+    { name: 'Butterfly (Maschine)', equip: 'Maschine', level: 1, sets: 3, reps: '12-15', tip: 'Ellbogen leicht gebeugt, am Ende 1 Sek. halten.' },
+    { name: 'Kabelzug Crossover', equip: 'Kabelzug', level: 2, sets: 3, reps: '12-15', tip: 'Von oben nach unten ziehen für die untere Brust.' },
+    { name: 'Dips (Brust-Fokus)', equip: 'Dipstation', level: 2, sets: 3, reps: '8-12', tip: 'Oberkörper nach vorne lehnen.' },
+    { name: 'Liegestütze', equip: 'Körpergewicht', level: 1, sets: 3, reps: 'max', tip: 'Körper bildet eine Linie, Ellbogen ca. 45°.' },
+    { name: 'Brustpresse (Maschine)', equip: 'Maschine', level: 1, sets: 3, reps: '10-12', tip: 'Ideal zum Ausbelasten am Ende.' },
+  ],
+  ruecken: [
+    { name: 'Klimmzüge', equip: 'Klimmzugstange', level: 2, sets: 4, reps: '6-10', tip: 'Brust zur Stange, Schulterblätter nach unten ziehen.' },
+    { name: 'Latzug (breit)', equip: 'Kabelzug', level: 1, sets: 3, reps: '8-12', tip: 'Stange zur oberen Brust, nicht in den Nacken.' },
+    { name: 'Langhantelrudern', equip: 'Langhantel', level: 2, sets: 4, reps: '6-10', tip: 'Rücken gerade, Stange zum Bauchnabel.' },
+    { name: 'Kurzhantelrudern einarmig', equip: 'Kurzhantel', level: 1, sets: 3, reps: '8-12', tip: 'Ellbogen eng am Körper nach hinten führen.' },
+    { name: 'Rudern am Kabel (eng)', equip: 'Kabelzug', level: 1, sets: 3, reps: '10-12', tip: 'Brust raus, am Ende Schulterblätter zusammen.' },
+    { name: 'Kreuzheben', equip: 'Langhantel', level: 3, sets: 3, reps: '4-6', tip: 'Neutraler Rücken, Stange nah am Körper.' },
+    { name: 'T-Bar Rudern', equip: 'T-Bar', level: 2, sets: 3, reps: '8-10', tip: 'Für einen dicken mittleren Rücken.' },
+    { name: 'Straight-Arm Pulldown', equip: 'Kabelzug', level: 1, sets: 3, reps: '12-15', tip: 'Arme gestreckt, Lat isoliert.' },
+  ],
+  schultern: [
+    { name: 'Schulterdrücken (Langhantel)', equip: 'Langhantel', level: 2, sets: 4, reps: '6-8', tip: 'Core anspannen, kein Hohlkreuz.' },
+    { name: 'Kurzhantel-Schulterdrücken', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '8-12', tip: 'Sitzend mit Rückenlehne für mehr Stabilität.' },
+    { name: 'Seitheben', equip: 'Kurzhanteln', level: 1, sets: 4, reps: '12-20', tip: 'Leichtes Gewicht, kontrolliert bis Schulterhöhe.' },
+    { name: 'Seitheben am Kabel', equip: 'Kabelzug', level: 2, sets: 3, reps: '12-15', tip: 'Konstante Spannung über die ganze Bewegung.' },
+    { name: 'Face Pulls', equip: 'Kabelzug', level: 1, sets: 3, reps: '15-20', tip: 'Seil zur Stirn, Ellbogen hoch — gut für Schultergesundheit.' },
+    { name: 'Reverse Butterfly', equip: 'Maschine', level: 1, sets: 3, reps: '12-15', tip: 'Trainiert die hintere Schulter.' },
+    { name: 'Arnold Press', equip: 'Kurzhanteln', level: 2, sets: 3, reps: '8-12', tip: 'Drehbewegung trifft alle Schulterköpfe.' },
+    { name: 'Frontheben', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '10-12', tip: 'Nicht schwingen, kontrolliert ablassen.' },
+  ],
+  bizeps: [
+    { name: 'Langhantel-Curls', equip: 'Langhantel', level: 1, sets: 3, reps: '8-12', tip: 'Ellbogen fixiert am Körper.' },
+    { name: 'Kurzhantel-Curls (supiniert)', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '10-12', tip: 'Handgelenk beim Hochgehen nach außen drehen.' },
+    { name: 'Hammer Curls', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '10-12', tip: 'Trifft auch Brachialis & Unterarm.' },
+    { name: 'Scott Curls', equip: 'SZ-Stange', level: 2, sets: 3, reps: '10-12', tip: 'Volle Streckung unten, kein Abfälschen.' },
+    { name: 'Schrägbank-Curls', equip: 'Kurzhanteln', level: 2, sets: 3, reps: '10-12', tip: 'Langer Bizepskopf maximal gedehnt.' },
+    { name: 'Kabel-Curls', equip: 'Kabelzug', level: 1, sets: 3, reps: '12-15', tip: 'Konstante Spannung, toller Finisher.' },
+  ],
+  trizeps: [
+    { name: 'Trizepsdrücken am Kabel', equip: 'Kabelzug', level: 1, sets: 3, reps: '10-15', tip: 'Ellbogen bleiben am Körper.' },
+    { name: 'Overhead Extension (Kabel)', equip: 'Kabelzug', level: 2, sets: 3, reps: '10-12', tip: 'Dehnt den langen Trizepskopf.' },
+    { name: 'French Press (SZ)', equip: 'SZ-Stange', level: 2, sets: 3, reps: '8-12', tip: 'Stange Richtung Stirn absenken.' },
+    { name: 'Enges Bankdrücken', equip: 'Langhantel', level: 2, sets: 3, reps: '6-10', tip: 'Griff schulterbreit, Ellbogen eng.' },
+    { name: 'Dips (Trizeps-Fokus)', equip: 'Dipstation', level: 2, sets: 3, reps: '8-12', tip: 'Oberkörper aufrecht halten.' },
+    { name: 'Kickbacks', equip: 'Kurzhantel', level: 1, sets: 3, reps: '12-15', tip: 'Oberarm parallel zum Boden.' },
+  ],
+  beine: [
+    { name: 'Kniebeugen (Langhantel)', equip: 'Langhantel', level: 2, sets: 4, reps: '5-8', tip: 'Knie folgen den Zehen, mindestens parallel.' },
+    { name: 'Beinpresse', equip: 'Maschine', level: 1, sets: 4, reps: '10-12', tip: 'Knie nicht ganz durchstrecken.' },
+    { name: 'Rumänisches Kreuzheben', equip: 'Langhantel', level: 2, sets: 3, reps: '8-10', tip: 'Hüfte nach hinten, Beinbeuger dehnen.' },
+    { name: 'Bulgarian Split Squats', equip: 'Kurzhanteln', level: 2, sets: 3, reps: '8-10', tip: 'Hinterer Fuß auf der Bank, aufrechter Oberkörper.' },
+    { name: 'Beinstrecker', equip: 'Maschine', level: 1, sets: 3, reps: '12-15', tip: 'Oben 1 Sek. halten.' },
+    { name: 'Beinbeuger liegend', equip: 'Maschine', level: 1, sets: 3, reps: '10-12', tip: 'Langsam ablassen.' },
+    { name: 'Ausfallschritte', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '10/Seite', tip: 'Knie hinten fast am Boden.' },
+    { name: 'Hack Squat', equip: 'Maschine', level: 2, sets: 3, reps: '8-12', tip: 'Super für den Quadrizeps.' },
+  ],
+  po: [
+    { name: 'Hip Thrust', equip: 'Langhantel', level: 2, sets: 4, reps: '8-12', tip: 'Oben Po maximal anspannen, Kinn zur Brust.' },
+    { name: 'Glute Bridge', equip: 'Körpergewicht', level: 1, sets: 3, reps: '15-20', tip: 'Fersen drücken in den Boden.' },
+    { name: 'Kabel-Kickbacks', equip: 'Kabelzug', level: 1, sets: 3, reps: '12-15', tip: 'Kein Hohlkreuz, Bewegung aus der Hüfte.' },
+    { name: 'Sumo Kreuzheben', equip: 'Langhantel', level: 3, sets: 3, reps: '6-8', tip: 'Breiter Stand, Knie nach außen.' },
+    { name: 'Abduktoren-Maschine', equip: 'Maschine', level: 1, sets: 3, reps: '15-20', tip: 'Leicht nach vorne lehnen für mehr Po-Aktivierung.' },
+    { name: 'Step-Ups', equip: 'Kurzhanteln', level: 1, sets: 3, reps: '10/Seite', tip: 'Über die Ferse hochdrücken.' },
+  ],
+  bauch: [
+    { name: 'Plank', equip: 'Körpergewicht', level: 1, sets: 3, reps: '45-60 s', tip: 'Po anspannen, kein Durchhängen.' },
+    { name: 'Hängendes Beinheben', equip: 'Klimmzugstange', level: 2, sets: 3, reps: '10-15', tip: 'Becken einrollen, nicht schwingen.' },
+    { name: 'Cable Crunches', equip: 'Kabelzug', level: 1, sets: 3, reps: '12-15', tip: 'Wirbel für Wirbel einrollen.' },
+    { name: 'Ab Wheel Rollout', equip: 'Ab Wheel', level: 3, sets: 3, reps: '8-12', tip: 'Rücken rund, langsam ausrollen.' },
+    { name: 'Russian Twists', equip: 'Gewichtsscheibe', level: 1, sets: 3, reps: '20', tip: 'Für die seitlichen Bauchmuskeln.' },
+    { name: 'Dead Bug', equip: 'Körpergewicht', level: 1, sets: 3, reps: '10/Seite', tip: 'Lendenwirbel bleibt am Boden.' },
+  ],
+  waden: [
+    { name: 'Wadenheben stehend', equip: 'Maschine', level: 1, sets: 4, reps: '10-15', tip: 'Unten voll dehnen, oben 1 Sek. halten.' },
+    { name: 'Wadenheben sitzend', equip: 'Maschine', level: 1, sets: 3, reps: '15-20', tip: 'Trifft den Soleus.' },
+    { name: 'Wadenheben an der Beinpresse', equip: 'Maschine', level: 1, sets: 3, reps: '12-15', tip: 'Knie gestreckt, langsam arbeiten.' },
+    { name: 'Einbeiniges Wadenheben', equip: 'Kurzhantel', level: 2, sets: 3, reps: '12/Seite', tip: 'Auf einer Stufe für mehr Bewegungsradius.' },
+  ],
+  unterarme: [
+    { name: 'Handgelenk-Curls', equip: 'Langhantel', level: 1, sets: 3, reps: '15-20', tip: 'Unterarme auf der Bank ablegen.' },
+    { name: 'Reverse Curls', equip: 'SZ-Stange', level: 1, sets: 3, reps: '10-12', tip: 'Obergriff, trifft Brachioradialis.' },
+    { name: "Farmer's Walk", equip: 'Kurzhanteln', level: 1, sets: 3, reps: '30-40 m', tip: 'Schwer greifen, aufrecht gehen.' },
+    { name: 'Dead Hang', equip: 'Klimmzugstange', level: 1, sets: 3, reps: 'max s', tip: 'Verbessert die Griffkraft enorm.' },
+  ],
+  cardio: [
+    { name: 'Laufband Intervalle', equip: 'Laufband', level: 2, sets: 1, reps: '20 min', tip: '1 min schnell / 1 min locker.' },
+    { name: 'Stairmaster', equip: 'Stepper', level: 1, sets: 1, reps: '15 min', tip: 'Nicht am Geländer abstützen.' },
+    { name: 'Rudergerät', equip: 'Rudergerät', level: 1, sets: 1, reps: '2000 m', tip: '60% Beine, 20% Rumpf, 20% Arme.' },
+    { name: 'Crosstrainer', equip: 'Crosstrainer', level: 1, sets: 1, reps: '20 min', tip: 'Gelenkschonend, ideal zum Aufwärmen.' },
+    { name: 'Burpees', equip: 'Körpergewicht', level: 2, sets: 4, reps: '12', tip: 'Explosiv hochspringen.' },
+    { name: 'Seilspringen', equip: 'Springseil', level: 1, sets: 5, reps: '1 min', tip: 'Auf den Fußballen bleiben.' },
+  ],
+};
+
+/* Fertige Split-Vorlagen (Index 0 = Montag) */
+window.PLAN_TEMPLATES = [
+  {
+    id: 'ppl', name: 'Push / Pull / Legs', desc: '6 Tage, maximale Frequenz',
+    days: [
+      { name: 'Push', groups: ['brust', 'schultern', 'trizeps'] },
+      { name: 'Pull', groups: ['ruecken', 'bizeps', 'unterarme'] },
+      { name: 'Legs', groups: ['beine', 'po', 'waden'] },
+      { name: 'Push', groups: ['brust', 'schultern', 'trizeps'] },
+      { name: 'Pull', groups: ['ruecken', 'bizeps', 'bauch'] },
+      { name: 'Legs', groups: ['beine', 'po', 'waden'] },
+      null,
+    ],
+  },
+  {
+    id: 'ul', name: 'Upper / Lower', desc: '4 Tage, perfekt für Fortschritt',
+    days: [
+      { name: 'Oberkörper', groups: ['brust', 'ruecken', 'schultern'] },
+      { name: 'Unterkörper', groups: ['beine', 'po', 'waden'] },
+      null,
+      { name: 'Oberkörper', groups: ['ruecken', 'brust', 'bizeps', 'trizeps'] },
+      { name: 'Unterkörper', groups: ['beine', 'po', 'bauch'] },
+      null, null,
+    ],
+  },
+  {
+    id: 'fb', name: 'Ganzkörper', desc: '3 Tage, ideal für Einsteiger',
+    days: [
+      { name: 'Ganzkörper A', groups: ['beine', 'brust', 'ruecken'] },
+      null,
+      { name: 'Ganzkörper B', groups: ['po', 'schultern', 'ruecken', 'bauch'] },
+      null,
+      { name: 'Ganzkörper C', groups: ['beine', 'brust', 'bizeps', 'trizeps'] },
+      null, null,
+    ],
+  },
+];
