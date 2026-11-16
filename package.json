@@ -1,0 +1,23 @@
+{
+  "name": "glassgym",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GlassGym – Trainingsplan, Ernährung & Gym-Kalender",
+  "scripts": {
+    "build:www": "node scripts/build-www.mjs",
+    "android:sync": "npm run build:www && npx cap sync android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
+    "esbuild": "^0.28.2"
+  }
+}

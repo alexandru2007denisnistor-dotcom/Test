@@ -15,8 +15,9 @@
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --smooth: cubic-bezier(0.22, 1, 0.36, 1);
   --radius: 26px;
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --safe-t: env(safe-area-inset-top, 0px);
+  /* Android-App (Capacitor) setzt --safe-area-inset-*, Browser/iOS liefern env() */
+  --safe-b: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-t: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   color-scheme: dark;
 }
 

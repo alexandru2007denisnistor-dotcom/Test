@@ -1065,6 +1065,7 @@ $('#settings-btn').addEventListener('click', openSettings);
    Benachrichtigungen & Service Worker
    ========================================================== */
 let swReg = null;
+const NATIVE = window.GGNative || null; // gesetzt in der Android-App (Capacitor)
 function reminderText(base = new Date()) {
   const lines = [];
   for (let n = 0; n < 3; n++) {
@@ -1074,29 +1075,70 @@ function reminderText(base = new Date()) {
   }
   return lines.join('\n');
 }
+const reminderTitle = (d = new Date()) => { const p = planFor(d); return p ? `🏋️ Heute: ${p.name}` : '😴 Heute ist Ruhetag'; };
+
+/* --- Android: echte, vom System geplante Benachrichtigungen (auch bei geschlossener App) --- */
+const NATIVE_IDS = Array.from({ length: 14 }, (_, n) => 100 + n);
+async function nativePermission(ask) {
+  const LN = NATIVE.LocalNotifications;
+  let p = await LN.checkPermissions();
+  if (p.display !== 'granted' && ask) p = await LN.requestPermissions();
+  if (p.display !== 'granted') return false;
+  try {
+    await LN.createChannel({ id: 'training', name: 'Training-Erinnerungen', description: 'Welches Training ansteht', importance: 4, vibration: true, lights: true, lightColor: '#8B7BFF' });
+  } catch (_) {}
+  return true;
+}
+async function scheduleNative() {
+  if (!NATIVE) return;
+  const LN = NATIVE.LocalNotifications;
+  try {
+    await LN.cancel({ notifications: NATIVE_IDS.map((id) => ({ id })) });
+    if (!state.settings.notify || !(await nativePermission(false))) return;
+    const [hh, mm] = (state.settings.notifyTime || '08:00').split(':').map(Number);
+    const now = Date.now(), notifications = [];
+    NATIVE_IDS.forEach((id, n) => {
+      const at = addDays(new Date(), n); at.setHours(hh, mm, 0, 0);
+      if (at.getTime() <= now + 30 * 1000) return;
+      notifications.push({ id, channelId: 'training', title: reminderTitle(at), body: reminderText(at), largeBody: reminderText(at), schedule: { at, allowWhileIdle: true } });
+    });
+    if (notifications.length) await LN.schedule({ notifications });
+  } catch (err) { console.warn('Erinnerungen konnten nicht geplant werden', err); }
+}
+let nativeTimer;
+const scheduleNativeSoon = () => { if (NATIVE) { clearTimeout(nativeTimer); nativeTimer = setTimeout(scheduleNative, 800); } };
+
 async function showNotification(title, body) {
+  if (NATIVE) return NATIVE.LocalNotifications.schedule({ notifications: [{ id: 99, channelId: 'training', title, body, largeBody: body }] });
   const opts = { body, icon: 'icon.svg', badge: 'icon.svg', tag: 'glassgym-daily', renotify: true, vibrate: [60, 40, 60] };
   if (swReg && swReg.showNotification) return swReg.showNotification(title, opts);
   return new Notification(title, opts);
 }
 async function sendReminder(test = false) {
-  if (!('Notification' in window)) return toast('Benachrichtigungen werden hier nicht unterstützt');
-  if (Notification.permission !== 'granted') {
-    const ok = await enableNotifications(true);
-    if (!ok) return;
+  if (NATIVE) {
+    if (!(await nativePermission(true))) return toast('Benachrichtigungen sind in den Android-Einstellungen blockiert');
+  } else {
+    if (!('Notification' in window)) return toast('Benachrichtigungen werden hier nicht unterstützt');
+    if (Notification.permission !== 'granted') {
+      const ok = await enableNotifications(true);
+      if (!ok) return;
+    }
   }
-  const p = planFor(new Date());
-  await showNotification(p ? `🏋️ Heute: ${p.name}` : '😴 Heute ist Ruhetag', reminderText());
+  await showNotification(reminderTitle(), reminderText());
   if (test) toast('🔔 Benachrichtigung gesendet');
 }
 async function enableNotifications(silent = false) {
-  if (!('Notification' in window)) {
-    toast('📱 Zum Homescreen hinzufügen, um Mitteilungen zu erhalten');
-    return false;
+  if (NATIVE) {
+    if (!(await nativePermission(true))) { toast('Benachrichtigungen sind in den Android-Einstellungen blockiert'); return false; }
+  } else {
+    if (!('Notification' in window)) {
+      toast('📱 Zum Homescreen hinzufügen, um Mitteilungen zu erhalten');
+      return false;
+    }
+    let perm = Notification.permission;
+    if (perm === 'default') perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Benachrichtigungen wurden blockiert'); return false; }
   }
-  let perm = Notification.permission;
-  if (perm === 'default') perm = await Notification.requestPermission();
-  if (perm !== 'granted') { toast('Benachrichtigungen wurden blockiert'); return false; }
   state.settings.notify = true;
   save();
   try {
@@ -1110,6 +1152,7 @@ async function enableNotifications(silent = false) {
 }
 function checkReminder() {
   const s = state.settings;
+  if (NATIVE) return; // Android plant die Benachrichtigungen selbst (scheduleNative)
   if (!s.notify || !('Notification' in window) || Notification.permission !== 'granted') return;
   const key = dkey(new Date());
   if (s.lastNotified === key) return;
@@ -1118,10 +1161,11 @@ function checkReminder() {
   sendReminder();
 }
 function syncServiceWorker() {
+  scheduleNativeSoon();
   const target = (swReg && swReg.active) || (navigator.serviceWorker && navigator.serviceWorker.controller);
   if (target) target.postMessage({ type: 'state', state: { plan: state.plan, settings: state.settings, groups: Object.fromEntries(GROUPS.map((g) => [g.id, g.name])) } });
 }
-if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+if (!NATIVE && 'serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').then((reg) => {
     swReg = reg;
     return navigator.serviceWorker.ready;
@@ -1131,10 +1175,29 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   });
 }
 setInterval(checkReminder, 60 * 1000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkReminder(); if (ui.tab === 'home') render(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkReminder(); scheduleNativeSoon(); if (ui.tab === 'home') render(); } });
 
-/* ---------- Kalender-Export (.ics) ---------- */
-function download(blob, name) {
+/* Android: Zurück-Taste schließt erst das Sheet, dann geht es zu „Heute“, dann raus */
+if (NATIVE) {
+  NATIVE.App.addListener('backButton', () => {
+    if (sheet.classList.contains('open')) closeSheet();
+    else if (ui.tab !== 'home') go('home');
+    else NATIVE.App.exitApp();
+  });
+}
+
+/* ---------- Dateien speichern / teilen ---------- */
+async function download(blob, name) {
+  if (NATIVE) {
+    try {
+      const { Filesystem, Directory, Encoding, Share } = NATIVE;
+      const res = await Filesystem.writeFile({ path: name, data: await blob.text(), directory: Directory.Cache, encoding: Encoding.UTF8 });
+      await Share.share({ title: name, url: res.uri, dialogTitle: 'Öffnen oder teilen mit …' });
+    } catch (err) {
+      if (!/cancel/i.test(String(err && err.message))) toast('❌ Datei konnte nicht geteilt werden');
+    }
+    return;
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
@@ -1168,4 +1231,5 @@ function exportICS() {
 render(true);
 requestAnimationFrame(moveBlob);
 checkReminder();
+scheduleNativeSoon();
 })();

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Monochromes Hantel-Icon für die Statusleiste (Benachrichtigungen) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M5,7.5h2a1,1 0,0 1,1 1v7a1,1 0,0 1,-1 1h-2a1,1 0,0 1,-1 -1v-7a1,1 0,0 1,1 -1z
+        M17,7.5h2a1,1 0,0 1,1 1v7a1,1 0,0 1,-1 1h-2a1,1 0,0 1,-1 -1v-7a1,1 0,0 1,1 -1z
+        M2.5,9.5h1.5v5h-1.5a0.75,0.75 0,0 1,-0.75 -0.75v-3.5a0.75,0.75 0,0 1,0.75 -0.75z
+        M20,9.5h1.5a0.75,0.75 0,0 1,0.75 0.75v3.5a0.75,0.75 0,0 1,-0.75 0.75h-1.5z
+        M8,11h8v2h-8z"/>
+</vector>
