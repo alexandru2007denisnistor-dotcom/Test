@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Klangwerk</title>
+  <meta name="description" content="Spotify, YouTube Music und Deezer in einer App." />
+  <meta name="theme-color" content="#0f0f14" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" aria-label="Navigation">
+      <a class="brand" href="#/">
+        <img src="icon.svg" alt="" width="32" height="32" />
+        <span>Klangwerk</span>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="#/" data-route="home"><span data-icon="home"></span><span>Start</span></a>
+        <a href="#/search" data-route="search"><span data-icon="search"></span><span>Suche</span></a>
+        <a href="#/library" data-route="library"><span data-icon="library"></span><span>Bibliothek</span></a>
+        <a href="#/settings" data-route="settings"><span data-icon="settings"></span><span>Einstellungen</span></a>
+      </nav>
+      <div class="sidebar-section">
+        <div class="sidebar-head">
+          <span>Playlists</span>
+          <button class="icon-btn small" id="new-playlist" title="Neue Playlist" aria-label="Neue Playlist"><span data-icon="plus"></span></button>
+        </div>
+        <ul class="sidebar-playlists" id="sidebar-playlists"></ul>
+      </div>
+    </aside>
+
+    <main class="main" id="main">
+      <header class="topbar">
+        <form class="searchbar" id="search-form" role="search">
+          <span data-icon="search"></span>
+          <input id="search-input" type="search" placeholder="Songs, Künstler, Alben – überall gleichzeitig suchen" autocomplete="off" enterkeyhint="search" aria-label="Suche" />
+        </form>
+      </header>
+      <div class="view" id="view" tabindex="-1"></div>
+    </main>
+
+    <aside class="panel" id="panel" aria-label="Wiedergabe">
+      <div class="panel-head">
+        <strong>Läuft gerade</strong>
+        <button class="icon-btn" id="panel-close" aria-label="Schließen"><span data-icon="close"></span></button>
+      </div>
+      <div class="panel-embed-slot" id="panel-embed-slot"></div>
+      <div class="panel-now" id="panel-now"></div>
+      <div class="panel-queue">
+        <div class="panel-subhead">
+          <span>Warteschlange</span>
+          <button class="text-btn" id="queue-clear">Leeren</button>
+        </div>
+        <ol class="queue-list" id="queue-list"></ol>
+      </div>
+    </aside>
+
+    <!-- Eingebettete Player (YouTube/Spotify). Wird per CSS positioniert, nie umgehängt – sonst lädt das iframe neu. -->
+    <div class="embed-dock" id="embed-dock" aria-label="Eingebetteter Player">
+      <div class="embed-frame" id="embed-youtube"><div id="yt-target"></div></div>
+      <div class="embed-frame" id="embed-spotify"><div id="sp-target"></div></div>
+    </div>
+
+    <footer class="playerbar" id="playerbar">
+      <div class="pb-track" id="pb-track"></div>
+      <div class="pb-center">
+        <div class="pb-controls">
+          <button class="icon-btn" id="btn-shuffle" aria-label="Zufallswiedergabe"><span data-icon="shuffle"></span></button>
+          <button class="icon-btn" id="btn-prev" aria-label="Zurück"><span data-icon="prev"></span></button>
+          <button class="play-btn" id="btn-play" aria-label="Abspielen"><span data-icon="play"></span></button>
+          <button class="icon-btn" id="btn-next" aria-label="Weiter"><span data-icon="next"></span></button>
+          <button class="icon-btn" id="btn-repeat" aria-label="Wiederholen"><span data-icon="repeat"></span></button>
+          <button class="icon-btn mobile-queue" id="btn-queue-m" aria-label="Warteschlange und Player"><span data-icon="queue"></span></button>
+        </div>
+        <div class="pb-progress">
+          <span class="time" id="time-pos">0:00</span>
+          <input type="range" id="seek" min="0" max="1000" value="0" step="1" aria-label="Position" />
+          <span class="time" id="time-dur">0:00</span>
+        </div>
+      </div>
+      <div class="pb-right">
+        <span class="pb-source" id="pb-source"></span>
+        <button class="icon-btn" id="btn-queue" aria-label="Warteschlange und Player"><span data-icon="queue"></span></button>
+        <span data-icon="volume" class="vol-icon"></span>
+        <input type="range" id="volume" min="0" max="100" value="80" aria-label="Lautstärke" />
+      </div>
+    </footer>
+  </div>
+
+  <div class="menu" id="menu" role="menu" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

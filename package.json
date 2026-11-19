@@ -1,0 +1,16 @@
+{
+  "name": "klangwerk",
+  "version": "1.0.0",
+  "description": "Eine Musik-App, die Spotify, YouTube Music und Deezer in einer Suche und einem Player vereint.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "license": "MIT"
+}
